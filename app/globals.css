@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #241c17;
+  color: #2a1d14;
+  font-family: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.office-floor {
+  background-color: #d3924e;
+  background-image:
+    linear-gradient(90deg, rgba(90, 48, 18, 0.16) 0 2px, transparent 2px),
+    repeating-linear-gradient(0deg, #e0a45c 0 22px, #c9843f 22px 24px);
+  background-size: 52px 100%, 100% 100%;
+  box-shadow:
+    inset 0 0 0 6px #6e4124,
+    0 14px 0 #1a120e;
+}
+
+.desk {
+  background: #fff8ee;
+  border: 2px solid #3a2918;
+  box-shadow: 3px 3px 0 #3a2918;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.desk:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #3a2918;
+}
+
+.desk:focus-visible {
+  outline: 3px solid #ffd84a;
+  outline-offset: 2px;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes question {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes dots {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.sprite-working {
+  animation: bob 0.5s ease-in-out infinite;
+}
+
+.light-working {
+  animation: glow 0.9s steps(2, end) infinite;
+}
+
+.q-bubble {
+  animation: question 1.1s ease-in-out infinite;
+}
+
+.typing-dot {
+  animation: dots 0.9s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.sprite-stale {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sprite-working,
+  .light-working,
+  .q-bubble,
+  .typing-dot,
+  .desk:hover {
+    animation: none;
+    transform: none;
+  }
+}
