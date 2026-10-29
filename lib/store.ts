@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { BOTS, type BotSlug } from "./bots";
-import type { BotRecord, HistoryEntry, OfficePayload, StatusPatch } from "./types";
+import { DASHBOARD_SECTIONS, type BotRecord, type DashboardData, type DashboardSection, type DashboardState, type HistoryEntry, type OfficePayload, type StatusPatch } from "./types";
 
 export const STALE_MS = 30 * 60 * 1000;
 const HISTORY_LIMIT = 20;
@@ -8,6 +8,8 @@ const HISTORY_LIMIT = 20;
 export interface OfficeStore {
   readAll(): Promise<Partial<Record<BotSlug, BotRecord>>>;
   write(slug: BotSlug, record: BotRecord): Promise<void>;
+  readDashboard(): Promise<DashboardState>;
+  writeDashboard(section: DashboardSection, entry: { data: DashboardData; updatedAt: string }): Promise<void>;
 }
 
 export function emptyRecord(): BotRecord {
@@ -51,6 +53,7 @@ export function resolveRedisEnv(): { url: string; token: string } | null {
 
 class MemoryStore implements OfficeStore {
   private records = new Map<BotSlug, BotRecord>();
+  private dashboard: DashboardState = blankDashboard();
 
   async readAll(): Promise<Partial<Record<BotSlug, BotRecord>>> {
     const out: Partial<Record<BotSlug, BotRecord>> = {};
@@ -62,8 +65,17 @@ class MemoryStore implements OfficeStore {
     this.records.set(slug, structuredClone(record));
   }
 
+  async readDashboard(): Promise<DashboardState> {
+    return structuredClone(this.dashboard);
+  }
+
+  async writeDashboard(section: DashboardSection, entry: { data: DashboardData; updatedAt: string }): Promise<void> {
+    this.dashboard = assignDashboard(this.dashboard, section, structuredClone(entry));
+  }
+
   clear(): void {
     this.records.clear();
+    this.dashboard = blankDashboard();
   }
 }
 
@@ -84,10 +96,63 @@ class RedisStore implements OfficeStore {
   async write(slug: BotSlug, record: BotRecord): Promise<void> {
     await this.redis.set(keyFor(slug), record);
   }
+
+  async readDashboard(): Promise<DashboardState> {
+    const values = await this.redis.mget<(unknown | null)[]>(...DASHBOARD_SECTIONS.map(dashboardKey));
+    let state = blankDashboard();
+    DASHBOARD_SECTIONS.forEach((section, index) => {
+      const entry = parseDashboard(values[index]);
+      if (entry) state = assignDashboard(state, section, entry);
+    });
+    return state;
+  }
+
+  async writeDashboard(section: DashboardSection, entry: { data: DashboardData; updatedAt: string }): Promise<void> {
+    await this.redis.set(dashboardKey(section), entry);
+  }
 }
 
 function keyFor(slug: BotSlug): string {
   return `office:bot:${slug}`;
+}
+
+function dashboardKey(section: DashboardSection): string {
+  return `office:dashboard:${section}`;
+}
+
+function blankDashboard(): DashboardState {
+  return { x_growth: null, x_advice: null, bot_results: null, spending: null };
+}
+
+function assignDashboard(
+  state: DashboardState,
+  section: DashboardSection,
+  entry: { data: DashboardData; updatedAt: string },
+): DashboardState {
+  const next = { ...state };
+  if (section === "x_growth") next.x_growth = entry as DashboardState["x_growth"];
+  else if (section === "x_advice") next.x_advice = entry as DashboardState["x_advice"];
+  else if (section === "bot_results") next.bot_results = entry as DashboardState["bot_results"];
+  else next.spending = entry as DashboardState["spending"];
+  return next;
+}
+
+function parseDashboard(value: unknown): { data: DashboardData; updatedAt: string } | null {
+  if (!value) return null;
+  let record: unknown = value;
+  if (typeof value === "string") {
+    try {
+      record = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+  const entry = record as { data?: unknown; updatedAt?: unknown };
+  if (typeof entry.updatedAt !== "string" || !entry.data || typeof entry.data !== "object" || Array.isArray(entry.data)) {
+    return null;
+  }
+  return { data: entry.data as DashboardData, updatedAt: entry.updatedAt };
 }
 
 function parseRecord(value: BotRecord | string | null): BotRecord | null {
@@ -128,10 +193,22 @@ export async function applyUpdate(patch: StatusPatch, now = new Date()): Promise
   return next;
 }
 
+export async function applyDashboard(
+  section: DashboardSection,
+  data: DashboardData,
+  now = new Date(),
+): Promise<{ data: DashboardData; updatedAt: string }> {
+  const entry = { data, updatedAt: now.toISOString() };
+  await getStore().writeDashboard(section, entry);
+  return entry;
+}
+
 export async function getOffice(now = new Date()): Promise<OfficePayload> {
-  const stored = await getStore().readAll();
+  const store = getStore();
+  const [stored, dashboard] = await Promise.all([store.readAll(), store.readDashboard()]);
   return {
     now: now.toISOString(),
+    dashboard,
     bots: BOTS.map((bot) => {
       const rec = stored[bot.slug] ?? emptyRecord();
       const stale = isStale(rec.updatedAt, now);
