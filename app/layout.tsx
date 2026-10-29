@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Bot Office",
-  description: "Live desks for Shahriar's assistant bots",
+  description: "Live desks and a dashboard for Shahriar's assistant bots",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

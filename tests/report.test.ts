@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import net from "node:net";
@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = path.join(root, "scripts/report.sh");
+const dashboardScript = path.join(root, "scripts/report-dashboard.sh");
 const bash = "/bin/bash";
 const TOKEN = "ingest-token-should-not-leak-9f3a";
 const PASS = "passcode-test";
@@ -34,6 +35,24 @@ async function report(args: string[], env: Record<string, string | undefined>): 
       code: typeof failed.code === "number" ? failed.code : 1,
     };
   }
+}
+
+function runDashboard(
+  args: string[],
+  env: Record<string, string | undefined>,
+  input?: string,
+): ReportResult {
+  const result = spawnSync(bash, [dashboardScript, ...args], {
+    env: env as NodeJS.ProcessEnv,
+    encoding: "utf8",
+    input,
+    timeout: 20_000,
+  });
+  return {
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
+    code: result.status ?? 1,
+  };
 }
 
 function assertNoToken(result: ReportResult) {
@@ -239,6 +258,119 @@ describe("report.sh against the dev server", { timeout: 180_000 }, () => {
     assert.equal(eka?.status, "done");
     assert.equal(eka?.doing, "");
     assert.equal(eka?.result, "pitch notes filed");
+  });
+
+  test("posts dashboard sections through report-dashboard.sh", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "bot-office-dash-"));
+    const growthFile = path.join(dir, "growth.json");
+    const spendFile = path.join(dir, "spend.json");
+    const botsFile = path.join(dir, "bots.json");
+    const envFile = path.join(dir, ".env");
+    await writeFile(
+      growthFile,
+      JSON.stringify({
+        followers: 42,
+        history: [{ date: "2026-10-01", followers: 40 }],
+        topPosts: [{ text: 'SAMPLE "post"', url: "https://x.com/sample/status/1", views: 3 }],
+      }),
+    );
+    await writeFile(
+      spendFile,
+      JSON.stringify({
+        month: "2026-10",
+        currency: "BDT",
+        total: 12,
+        categories: [{ name: 'SAMPLE "food"', amount: 12 }],
+      }),
+    );
+    await writeFile(
+      botsFile,
+      JSON.stringify({
+        bots: [{ slug: "money-kick", job: "SAMPLE job", recent: ["SAMPLE result"] }],
+      }),
+    );
+    await writeFile(envFile, `export BOT_OFFICE_URL="${base}/"\nBOT_OFFICE_TOKEN='${TOKEN}'\n`);
+
+    const env = {
+      PATH: process.env.PATH,
+      BOT_OFFICE_URL: base,
+      BOT_OFFICE_TOKEN: TOKEN,
+      LANG: "C.UTF-8",
+    };
+
+    const growth = runDashboard(["x_growth", growthFile], env);
+    assert.equal(growth.code, 0, growth.stdout + growth.stderr);
+    assert.equal(growth.stdout, "ok x_growth\n");
+    assertNoToken(growth);
+
+    const advice = runDashboard(
+      ["x_advice", "-"],
+      env,
+      JSON.stringify({ summary: "SAMPLE advice", actions: ["SAMPLE: post it"] }),
+    );
+    assert.equal(advice.code, 0, advice.stdout + advice.stderr);
+    assert.equal(advice.stdout, "ok x_advice\n");
+
+    const spending = runDashboard(["spending", spendFile], {
+      PATH: path.join(shim, "bin"),
+      BOT_OFFICE_URL: base,
+      BOT_OFFICE_TOKEN: TOKEN,
+      LANG: "C.UTF-8",
+    });
+    assert.equal(spending.code, 0, `${spending.stdout}\n${spending.stderr}`);
+    assert.equal(spending.stdout, "ok spending\n");
+    assertNoToken(spending);
+
+    const bots = runDashboard(["bot_results", botsFile], {
+      PATH: process.env.PATH,
+      BOT_OFFICE_ENV: envFile,
+      LANG: "C.UTF-8",
+    });
+    assert.equal(bots.code, 0, bots.stdout + bots.stderr);
+    assert.equal(bots.stdout, "ok bot_results\n");
+    assertNoToken(bots);
+
+    const bad = runDashboard(["nope", growthFile], env);
+    assert.notEqual(bad.code, 0);
+    assert.match(bad.stdout, /^report failed: HTTP 400 /);
+    assert.equal(bad.stdout.trim().split("\n").length, 1);
+    assertNoToken(bad);
+
+    const wrong = runDashboard(["x_growth", growthFile], { ...env, BOT_OFFICE_TOKEN: "wrong-token" });
+    assert.notEqual(wrong.code, 0);
+    assert.match(wrong.stdout, /HTTP 401/);
+    assert.equal(wrong.stdout.includes(TOKEN), false);
+    assert.equal(wrong.stdout.includes("wrong-token"), false);
+
+    const login = await fetch(`${base}/api/auth`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ passcode: PASS }),
+    });
+    assert.equal(login.status, 200);
+    const cookie = login.headers.getSetCookie()[0]?.split(";")[0];
+    assert.ok(cookie);
+    const board = await fetch(`${base}/api/office`, { headers: { cookie } });
+    assert.equal(board.status, 200);
+    const body = (await board.json()) as {
+      dashboard: {
+        x_growth: { data: { followers: number; topPosts: Array<{ text: string }> } };
+        x_advice: { data: { summary: string; actions: string[] } };
+        spending: { data: { total: number; categories: Array<{ name: string }> } };
+        bot_results: { data: { bots: Array<{ slug: string; job: string; recent: string[] }> } };
+      };
+    };
+    assert.equal(body.dashboard.x_growth.data.followers, 42);
+    assert.equal(body.dashboard.x_growth.data.topPosts[0].text, 'SAMPLE "post"');
+    assert.equal(body.dashboard.x_advice.data.summary, "SAMPLE advice");
+    assert.equal(body.dashboard.x_advice.data.actions[0], "SAMPLE: post it");
+    assert.equal(body.dashboard.spending.data.total, 12);
+    assert.equal(body.dashboard.spending.data.categories[0].name, 'SAMPLE "food"');
+    assert.equal(body.dashboard.bot_results.data.bots[0].slug, "money-kick");
+    assert.equal(body.dashboard.bot_results.data.bots[0].job, "SAMPLE job");
+    assert.equal(body.dashboard.bot_results.data.bots[0].recent[0], "SAMPLE result");
+
+    await rm(dir, { recursive: true, force: true });
   });
 });
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Character, type CharacterMode } from "@/components/characters";
+import { Dashboard } from "@/components/dashboard";
 import type { BotSlug } from "@/lib/bots";
 import { formatAgo } from "@/lib/time";
 import { STATUSES, type OfficeBot, type OfficePayload, type Status } from "@/lib/types";
@@ -146,6 +147,7 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
             </div>
           </div>
         </section>
+        <Dashboard state={data.dashboard} now={now} />
       </main>
 
       {open ? (

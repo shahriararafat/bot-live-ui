@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_NAME, verifySession } from "./lib/session";
 
 function isPublic(pathname: string): boolean {
-  return pathname === "/login" || pathname === "/api/auth" || pathname === "/api/status";
+  return (
+    pathname === "/login" ||
+    pathname === "/api/auth" ||
+    pathname === "/api/status" ||
+    pathname === "/api/dashboard"
+  );
 }
 
 export function proxy(request: NextRequest) {
