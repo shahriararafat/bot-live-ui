@@ -3,6 +3,7 @@ import { DASHBOARD_SECTIONS, type BotResultEntry, type DashboardData, type Dashb
 import { charCount } from "./validate";
 
 export const MAX_DASHBOARD_BYTES = 16 * 1024;
+export const MAX_BOT_RESULTS = 30;
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ISO_MONTH = /^(\d{4})-(\d{2})$/;
@@ -196,7 +197,7 @@ function validateBots(value: unknown): Parsed<{ bots: BotResultEntry[] }> {
   if (!object.ok) return object;
   const extra = rejectUnknown(object.value, ["bots"]);
   if (extra) return { ok: false, error: extra };
-  const bots = asList(object.value.bots, "bots", 14);
+  const bots = asList(object.value.bots, "bots", MAX_BOT_RESULTS);
   if (!bots.ok) return bots;
   const entries: BotResultEntry[] = [];
   const seen = new Set<string>();

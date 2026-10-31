@@ -108,7 +108,7 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
               {offline ? "reconnecting" : "live"}
             </p>
             <h1 className="text-2xl font-black leading-none">Bot Office</h1>
-            <p className="mt-1 text-xs text-[#e7c89a]">Fourteen desks. Updates while this tab is open.</p>
+            <p className="mt-1 text-xs text-[#e7c89a]">Fifteen desks. Updates while this tab is open.</p>
           </div>
         </div>
         <ul className="flex flex-wrap gap-2" aria-label="Bots by status">
@@ -124,14 +124,14 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
 
       <main className="mx-auto max-w-[1240px] px-3 pb-8">
         <section className="office-floor rounded-2xl p-3" aria-label="Office floor">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:hidden">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:hidden">
             {data.bots.map((bot) => (
               <Desk key={bot.slug} bot={bot} now={now} variant="row" onOpen={setOpenSlug} />
             ))}
           </div>
-          <div className="hidden xl:block">
-            <div className="grid grid-cols-7 gap-2">
-              {data.bots.slice(0, 7).map((bot) => (
+          <div className="hidden lg:block">
+            <div className="grid grid-cols-5 gap-2">
+              {data.bots.slice(0, 5).map((bot) => (
                 <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
               ))}
             </div>
@@ -140,8 +140,8 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
               hallway
               <span className="h-px flex-1 bg-[#6e4124]/50" />
             </div>
-            <div className="grid grid-cols-7 gap-2">
-              {data.bots.slice(7).map((bot) => (
+            <div className="grid grid-cols-5 gap-2">
+              {data.bots.slice(5).map((bot) => (
                 <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
               ))}
             </div>
