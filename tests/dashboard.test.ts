@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { NextRequest } from "next/server";
 import { POST as postDashboard } from "../app/api/dashboard/route";
 import { GET as getOfficeRoute } from "../app/api/office/route";
-import { MAX_DASHBOARD_BYTES, followerChange } from "../lib/dashboard";
+import { BOTS } from "../lib/bots";
+import { MAX_BOT_RESULTS, MAX_DASHBOARD_BYTES, followerChange } from "../lib/dashboard";
 import { COOKIE_NAME, signSession } from "../lib/session";
 import { getOffice, resetStoreForTests } from "../lib/store";
 import { proxy } from "../proxy";
@@ -154,7 +155,8 @@ describe("dashboard", { concurrency: 1 }, () => {
     assert.equal(office.dashboard.bot_results.data.bots[0].slug, "pikachu");
     assert.equal(office.dashboard.spending.data.total, 48250);
     assert.equal(office.dashboard.spending.data.categories[0].name, "SAMPLE food");
-    assert.equal(office.bots.length, 14);
+    assert.equal(office.bots.length, 15);
+    assert.equal(office.bots.some((entry: { slug: string }) => entry.slug === "runlog"), true);
   });
 
   test("a bad section is 400", async () => {
@@ -294,6 +296,28 @@ describe("dashboard", { concurrency: 1 }, () => {
 
     const office = await getOffice();
     assert.equal(office.dashboard.x_growth?.data.followers, 10);
+  });
+
+  test("bot_results accepts every desk and rejects a list over 30", async () => {
+    const all = await dashboardRequest({
+      section: "bot_results",
+      data: {
+        bots: BOTS.map((bot) => ({ slug: bot.slug, job: `${bot.name} on duty`, recent: ["logged"] })),
+      },
+    });
+    assert.equal(all.status, 200);
+    const stored = await all.json();
+    assert.equal(stored.data.bots.length, BOTS.length);
+    assert.equal(stored.data.bots.at(-1).slug, "runlog");
+
+    const tooMany = await dashboardRequest({
+      section: "bot_results",
+      data: { bots: Array.from({ length: MAX_BOT_RESULTS + 1 }, () => ({})) },
+    });
+    assert.equal(tooMany.status, 400);
+    assert.deepEqual(await tooMany.json(), { error: "bots must have 30 entries or fewer" });
+    const office = await getOffice();
+    assert.equal(office.dashboard.bot_results?.data.bots.length, BOTS.length);
   });
 
   test("a slug that is not in the roster is 400", async () => {

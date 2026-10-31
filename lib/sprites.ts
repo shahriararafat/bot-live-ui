@@ -302,6 +302,27 @@ export const SPRITES: Record<BotSlug, Sprite> = {
       "................",
     ],
   },
+  runlog: {
+    colors: { K, H: "#3a2418", S: "#f0c9a0", R: "#ff4d1c", W: "#fffaf2", B: "#1a3a6b", N: "#1d4ed8" },
+    rows: [
+      "......KKKK......",
+      ".....KHHHHK.....",
+      ".....KHSSHK.....",
+      ".....KSKKSK.....",
+      "....KKRRRRKK....",
+      "...KRRRRRRRRK...",
+      "...KRRWWWWWRK...",
+      "...KRRWBBWWRK...",
+      "....KRRRRRRK....",
+      "...KKK...RRRK...",
+      "..KRRR...KK.....",
+      "..KRR.....RRK...",
+      "...KK.....KK....",
+      "..NN.......NN...",
+      ".NNK.......KNN..",
+      "................",
+    ],
+  },
 };
 
 for (const [slug, sprite] of Object.entries(SPRITES)) {
