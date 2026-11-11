@@ -323,6 +323,27 @@ export const SPRITES: Record<BotSlug, Sprite> = {
       "................",
     ],
   },
+  motionlab: {
+    colors: { K, S: "#f0c9a0", M: "#5b4bdb", W: "#fffaf2", R: "#ff3b5c" },
+    rows: [
+      "................",
+      "......KKKK......",
+      ".....KMMMMK.....",
+      ".....KSSSSK.....",
+      ".....KSKKSK.....",
+      ".....KSSSSK.....",
+      "..KKKKKKKKKKKK..",
+      "..KWWWWWWWWWWK..",
+      "...KMMMMMMMMK...",
+      "...KMMRRRRMMK...",
+      "...KMMMMMMMMK...",
+      "....KMMMMMMK....",
+      "...KKM....MKK...",
+      "...KMK....KMK...",
+      "...KMK....KMK...",
+      "....K......K....",
+    ],
+  },
 };
 
 for (const [slug, sprite] of Object.entries(SPRITES)) {

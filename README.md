@@ -1,6 +1,6 @@
 # Bot Office
 
-A small live floor for Shahriar's 15 assistant bots. Each bot has a desk, a pixel character, and a status light. Under the floor, four panels show X growth, X advice, bot jobs, and spending. The page polls a private read API about every 2 seconds while the tab is visible, and again as soon as the window is focused, so a new report shows up within a couple of seconds. There are no websockets.
+A small live floor for Shahriar's 16 assistant bots. Each bot has a desk, a pixel character, and a status light. Under the floor, four panels show X growth, X advice, bot jobs, and spending. The page polls a private read API about every 2 seconds while the tab is visible, and again as soon as the window is focused, so a new report shows up within a couple of seconds. There are no websockets.
 
 Bots post their own status and dashboard sections. The browser never talks to Redis.
 
@@ -23,6 +23,7 @@ Bots post their own status and dashboard sections. The browser never talks to Re
 | `tubescout` | TubeScout | YouTube ideas |
 | `tubecal` | TubeCal | upload calendar |
 | `runlog` | RunLog | running and marathon tracker |
+| `motionlab` | MotionLab | video and motion graphics |
 
 Status is one of `idle`, `working`, `waiting`, or `done`. `waiting` means the bot is waiting on Shahriar.
 

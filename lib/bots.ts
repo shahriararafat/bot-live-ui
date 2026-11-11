@@ -14,6 +14,7 @@ export const BOTS = [
   { slug: "tubescout", name: "TubeScout", role: "YouTube ideas", accent: "#e23b3b" },
   { slug: "tubecal", name: "TubeCal", role: "upload calendar", accent: "#ff6b6b" },
   { slug: "runlog", name: "RunLog", role: "running and marathon tracker", accent: "#ff4d1c" },
+  { slug: "motionlab", name: "MotionLab", role: "video and motion graphics", accent: "#5b4bdb" },
 ] as const;
 
 export type BotSlug = (typeof BOTS)[number]["slug"];

@@ -170,6 +170,15 @@ describe("POST /api/status", () => {
     assert.equal(body.doing, "easy 8k");
   });
 
+  test("accepts a motionlab status", async () => {
+    const res = await statusRequest({ bot: "motionlab", status: "working", doing: "cutting a cinematic clip" });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.bot, "motionlab");
+    assert.equal(body.status, "working");
+    assert.equal(body.doing, "cutting a cinematic clip");
+  });
+
   test("a rejected report does not change the stored state", async () => {
     assert.equal((await statusRequest({ bot: "tubecal", status: "working", doing: "picking Friday" })).status, 200);
     assert.equal((await statusRequest({ bot: "tubecal", status: "working", doing: "nope" }, "wrong")).status, 401);
@@ -229,8 +238,9 @@ describe("passcode gate", () => {
     const bot = body.bots.find((entry: { slug: string }) => entry.slug === "scriptsmith");
     assert.equal(bot.result, "hook is ready");
     assert.equal(bot.displayStatus, "done");
-    assert.equal(body.bots.length, 15);
+    assert.equal(body.bots.length, 16);
     assert.equal(body.bots.some((entry: { slug: string }) => entry.slug === "runlog"), true);
+    assert.equal(body.bots.some((entry: { slug: string }) => entry.slug === "motionlab"), true);
   });
 });
 });

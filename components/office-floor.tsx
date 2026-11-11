@@ -108,7 +108,7 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
               {offline ? "reconnecting" : "live"}
             </p>
             <h1 className="text-2xl font-black leading-none">Bot Office</h1>
-            <p className="mt-1 text-xs text-[#e7c89a]">Fifteen desks. Updates while this tab is open.</p>
+            <p className="mt-1 text-xs text-[#e7c89a]">Sixteen desks. Updates while this tab is open.</p>
           </div>
         </div>
         <ul className="flex flex-wrap gap-2" aria-label="Bots by status">
@@ -130,8 +130,8 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
             ))}
           </div>
           <div className="hidden lg:block">
-            <div className="grid grid-cols-5 gap-2">
-              {data.bots.slice(0, 5).map((bot) => (
+            <div className="grid grid-cols-4 gap-2">
+              {data.bots.slice(0, 8).map((bot) => (
                 <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
               ))}
             </div>
@@ -140,8 +140,8 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
               hallway
               <span className="h-px flex-1 bg-[#6e4124]/50" />
             </div>
-            <div className="grid grid-cols-5 gap-2">
-              {data.bots.slice(5).map((bot) => (
+            <div className="grid grid-cols-4 gap-2">
+              {data.bots.slice(8).map((bot) => (
                 <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
               ))}
             </div>
