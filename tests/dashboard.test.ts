@@ -155,9 +155,10 @@ describe("dashboard", { concurrency: 1 }, () => {
     assert.equal(office.dashboard.bot_results.data.bots[0].slug, "pikachu");
     assert.equal(office.dashboard.spending.data.total, 48250);
     assert.equal(office.dashboard.spending.data.categories[0].name, "SAMPLE food");
-    assert.equal(office.bots.length, 16);
+    assert.equal(office.bots.length, 17);
     assert.equal(office.bots.some((entry: { slug: string }) => entry.slug === "runlog"), true);
     assert.equal(office.bots.some((entry: { slug: string }) => entry.slug === "motionlab"), true);
+    assert.equal(office.bots.some((entry: { slug: string }) => entry.slug === "postpix"), true);
   });
 
   test("a bad section is 400", async () => {
@@ -309,7 +310,7 @@ describe("dashboard", { concurrency: 1 }, () => {
     assert.equal(all.status, 200);
     const stored = await all.json();
     assert.equal(stored.data.bots.length, BOTS.length);
-    assert.equal(stored.data.bots.at(-1).slug, "motionlab");
+    assert.equal(stored.data.bots.at(-1).slug, "postpix");
 
     const tooMany = await dashboardRequest({
       section: "bot_results",
