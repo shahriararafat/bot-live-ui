@@ -108,7 +108,7 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
               {offline ? "reconnecting" : "live"}
             </p>
             <h1 className="text-2xl font-black leading-none">Bot Office</h1>
-            <p className="mt-1 text-xs text-[#e7c89a]">Sixteen desks. Updates while this tab is open.</p>
+            <p className="mt-1 text-xs text-[#e7c89a]">Seventeen desks. Updates while this tab is open.</p>
           </div>
         </div>
         <ul className="flex flex-wrap gap-2" aria-label="Bots by status">
@@ -124,27 +124,21 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
 
       <main className="mx-auto max-w-[1240px] px-3 pb-8">
         <section className="office-floor rounded-2xl p-3" aria-label="Office floor">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:hidden">
+          <div className="flex flex-wrap justify-center gap-2 xl:hidden">
             {data.bots.map((bot) => (
-              <Desk key={bot.slug} bot={bot} now={now} variant="row" onOpen={setOpenSlug} />
+              <div key={bot.slug} className="flex w-full sm:w-[calc((100%-0.5rem)/2)] lg:w-[calc((100%-1.5rem)/4)]">
+                <Desk bot={bot} now={now} variant="row" onOpen={setOpenSlug} />
+              </div>
             ))}
           </div>
-          <div className="hidden lg:block">
-            <div className="grid grid-cols-4 gap-2">
-              {data.bots.slice(0, 8).map((bot) => (
-                <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
-              ))}
-            </div>
+          <div className="hidden xl:block">
+            <DeskBay bots={data.bots.slice(0, 12)} now={now} onOpen={setOpenSlug} />
             <div className="my-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[#6e4124]">
               <span className="h-px flex-1 bg-[#6e4124]/50" />
               hallway
               <span className="h-px flex-1 bg-[#6e4124]/50" />
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {data.bots.slice(8).map((bot) => (
-                <Desk key={bot.slug} bot={bot} now={now} variant="desk" onOpen={setOpenSlug} />
-              ))}
-            </div>
+            <DeskBay bots={data.bots.slice(12)} now={now} onOpen={setOpenSlug} />
           </div>
         </section>
         <Dashboard state={data.dashboard} now={now} />
@@ -207,6 +201,26 @@ export function OfficeFloor({ initial }: { initial: OfficePayload }) {
   );
 }
 
+function DeskBay({
+  bots,
+  now,
+  onOpen,
+}: {
+  bots: OfficeBot[];
+  now: number;
+  onOpen: (slug: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      {bots.map((bot) => (
+        <div key={bot.slug} className="flex w-[calc((100%-2.5rem)/6)]">
+          <Desk bot={bot} now={now} variant="desk" onOpen={onOpen} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Desk({
   bot,
   now,
@@ -235,7 +249,7 @@ function Desk({
   return (
     <button
       type="button"
-      className={variant === "desk" ? "desk flex h-full flex-col items-center p-2" : "desk flex w-full items-start gap-3 p-3"}
+      className={variant === "desk" ? "desk flex h-full w-full flex-col items-center p-2" : "desk flex w-full items-start gap-3 p-3"}
       style={{ boxShadow: `inset 0 4px 0 ${bot.accent}, 3px 3px 0 #3a2918` }}
       onClick={() => onOpen(bot.slug)}
       aria-label={label}

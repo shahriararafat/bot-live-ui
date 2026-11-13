@@ -179,6 +179,15 @@ describe("POST /api/status", () => {
     assert.equal(body.doing, "cutting a cinematic clip");
   });
 
+  test("accepts a postpix status", async () => {
+    const res = await statusRequest({ bot: "postpix", status: "working", doing: "framing the new post" });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.bot, "postpix");
+    assert.equal(body.status, "working");
+    assert.equal(body.doing, "framing the new post");
+  });
+
   test("a rejected report does not change the stored state", async () => {
     assert.equal((await statusRequest({ bot: "tubecal", status: "working", doing: "picking Friday" })).status, 200);
     assert.equal((await statusRequest({ bot: "tubecal", status: "working", doing: "nope" }, "wrong")).status, 401);
@@ -238,9 +247,10 @@ describe("passcode gate", () => {
     const bot = body.bots.find((entry: { slug: string }) => entry.slug === "scriptsmith");
     assert.equal(bot.result, "hook is ready");
     assert.equal(bot.displayStatus, "done");
-    assert.equal(body.bots.length, 16);
+    assert.equal(body.bots.length, 17);
     assert.equal(body.bots.some((entry: { slug: string }) => entry.slug === "runlog"), true);
     assert.equal(body.bots.some((entry: { slug: string }) => entry.slug === "motionlab"), true);
+    assert.equal(body.bots.some((entry: { slug: string }) => entry.slug === "postpix"), true);
   });
 });
 });
